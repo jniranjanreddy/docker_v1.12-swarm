@@ -1,62 +1,27 @@
-# docker_v1.12 - Swarm Tutorials
+# Building Swarm Cluster and Deploying an App
 
-## Setting UP
+## Setting up Nodes for Launching Swarm Cluster
 
-> Three ubuntu machines in openstack under `Docker-Swarm` project
+```
+docker-machine create -d virtualbox  swarm-01
 
-|Name|IP|
-|:---:|:---:|
-|manager1|192.168.0.52|
-|worker-1|192.168.0.53|
-|worker-2|192.168.0.54|
+docker-machine create -d virtualbox  swarm-02
 
-> Installing Docker-1.12 on ubuntu-trusty
+docker-machine create -d virtualbox  swarm-03
 
-  - Update the machine `sudo apt-get update`
-
-  - Installing certificates `sudo apt-get install apt-transport-https ca-certificates`
-
-  - Adding APT key
-      ```
-      sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D`
-      ```
-
-  - Add an APT-source entry
-    - Edit/Create a file `vim /etc/apt/sources.list.d/docker.list`
-    - Add an entry `deb https://apt.dockerproject.org/repo ubuntu-trusty main`
-
-      (or)
-
-    - Just run
-        ```
-        sudo echo 'deb https://apt.dockerproject.org/repo ubuntu-trusty main' > /etc/apt/sources.list.d/docker.list`
-        ```
-
-  - Run update to update the APT-source entry `sudo apt-get update`
-
-  - To purge existing docker `sudo apt-get purge lxc-docker`
-
-  - Verify that APT is pulling from the right repository `apt-cache policy docker-engine`
-
-  - Prerequisites by Ubuntu Version
-      ```
-      sudo apt-get install linux-image-extra-$(uname -r) linux-image-extra-virtual
-      sudo reboot
-      ```
-
-  - Running machine update once again `sudo apt-get update`
-
-  - Installing docker-engine `sudo apt-get install docker-engine`
-
-  - Check the docker version `docker -v`
-
-  - Docker service will be started automatically if not run `sudo service docker start`
+```
 
 ## Creating a Docker-Swarm visualizer
 
-We gonna use docker [`manomarks/visualizer`](https://hub.docker.com/r/manomarks/visualizer/) image to get a clear idea about docker swarm.
+We are going to  use docker [`manomarks/visualizer`](https://hub.docker.com/r/manomarks/visualizer/) image, which launched a web based visualizer for swarm.
 
-Run the following command on the master node
+Connect to master  
+```
+docker-machine env swarm-01
+
+```
+
+Launch Visualizer  with  
 
 ```
 docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock manomarks/visualizer
@@ -68,14 +33,14 @@ docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock mano
 
 ![a](./readme-images/a.png)
 
-Visit **http://192.168.0.52:5000** in browser to see the running docker-visualizer.
+Visit **http://IP_ADDRESS_OF_MASTER:5000** in browser to see the running docker-visualizer.
 
 ## Creating Swarm Master
 
-On master1 node run the following command
+On master node run the following command
 
 ```
-docker swarm init --advertise-addr 192.168.0.52
+docker swarm init --advertise-addr 192.168.99.xx
 ```
 
 ![1](./readme-images/1.png)
@@ -86,31 +51,33 @@ In visualizer you can see the master node
 
 ## Attaching Worker Nodes to Swarm Master
 
-On worker-1 node run the following `docker swarm join` command with the token generated on `master1`
+On swarm-01 node run the following `docker swarm join` command with the token generated on `master`
 
+e.g.
 ```
 docker swarm join \
 --token SWMTKN-1-3kjq5jkbv2tfxzr5kkvtbqmq7eboj1mkewr47g7dhpo69gfnsh-4ja77pbzmvgonnzvq8aio6xku \
-192.168.0.52:2377
+192.168.0.xx:2377
 ```
 
 ![3](./readme-images/3.png)
 
-In visualizer you can see the worker-1 node
+In visualizer you can see the swarm-01 node
 
 ![4](./readme-images/4.png)
 
-Also on worker-2 node run the same `docker swarm join` command
+Also on swarm-02 node run the same `docker swarm join` command
 
+e.g.
 ```
 docker swarm join \
 --token SWMTKN-1-3kjq5jkbv2tfxzr5kkvtbqmq7eboj1mkewr47g7dhpo69gfnsh-4ja77pbzmvgonnzvq8aio6xku \
-192.168.0.52:2377
+192.168.0.xx:2377
 ```
 
 ![5](./readme-images/5.png)
 
-In visualizer you can see the worker-2 node
+In visualizer you can see the swarm-02 node
 
 ![6](./readme-images/6.png)
 
@@ -126,7 +93,7 @@ docker node ls
 
 ## Deploy a service to the swarm
 
-On Manager node run the following command to deploy a [sample voting service](https://hub.docker.com/r/instavote/vote/) for testing the swarm usage
+Connect to  Master node and  run the following command to deploy a [sample voting service](https://hub.docker.com/r/instavote/vote/) for testing the swarm usage
 
 ```
 docker service create --replicas 1 --name vote -p 8080:80 instavote/vote
@@ -255,7 +222,7 @@ By visiting http://<IP>:8080 in browser we can see the output with a container I
 
 ![1.gif](./readme-images/gif/1.gif)
 
-## Service Scale in swarm
+## Scaling a service  with swarm
 
 In master node running the command `docker service scale <SERVICE-ID>=<NUMBER-OF-TASKS>` will change the desired state of running service in swarm.
 
