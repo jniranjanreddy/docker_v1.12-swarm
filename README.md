@@ -24,7 +24,8 @@ docker-machine env swarm-01
 Launch Visualizer  with  
 
 ```
-docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock manomarks/visualizer
+docker run -it -d -p 5000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer
+
 ```
 
 ![b](./readme-images/b.png)
